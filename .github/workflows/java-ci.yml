@@ -21,10 +21,20 @@ jobs:
           cache: 'maven'
 
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B clean package
 
       - name: Run tests
         run: mvn -B test
 
-      - name: Verify code format
+      - name: Check code format
         run: mvn -B spotless:check
+
+      - name: Format code (if needed)
+        if: failure() && steps.check-format.outcome == 'failure'
+        run: |
+          mvn -B spotless:apply
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "style: auto-format code" || echo "No formatting changes"
+          git push
